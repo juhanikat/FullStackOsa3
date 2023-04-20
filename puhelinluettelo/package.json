@@ -840,6 +840,7 @@
   "scripts": {
     "start": "node src/server.js",
     "build": "npm install",
+    "build:ui": "rm -rf build && cd ./front-end && npm run build && cp -r build ../",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
