@@ -202,7 +202,6 @@
     "escape-html": "^1.0.3",
     "escape-string-regexp": "^4.0.0",
     "escodegen": "^2.0.0",
-    "eslint": "^8.38.0",
     "eslint-config-react-app": "^7.0.1",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
@@ -841,8 +840,12 @@
     "start": "node src/server.js",
     "build": "npm install",
     "build:ui": "rm -rf build && cd ./front-end && npm run build && cp -r build ../",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint ."
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.39.0"
+  }
 }
