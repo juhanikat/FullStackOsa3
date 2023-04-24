@@ -10,14 +10,14 @@ app.use(express.static("build"))
 app.use(express.json()) // this has to be before the morgan stuff
 app.use(cors())
 
-morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
+morgan.token('body', function (req, _res) { return JSON.stringify(req.body) })
 morgan = morgan(":method :url :status - :response-time ms - :body")
 app.use(morgan)
 
 
 
 
-app.get("/info", (req, res) => {
+app.get("/info", (_req, res, next) => {
     Person.find({})
         .then(result => {
             const amount = result.length
@@ -27,10 +27,12 @@ app.get("/info", (req, res) => {
         .catch(error => next(error))
 })
 
-app.get("/api/persons", (_req, res) => {
-    Person.find({}).then(result => {
-        res.json(result)
-    })
+app.get("/api/persons", (_req, res, next) => {
+    Person.find({})
+        .then(result => {
+            res.json(result)
+        })
+        .catch(error => next(error))
 })
 
 
@@ -62,14 +64,9 @@ const generateId = () => {
 }
 
 app.put('/api/persons/:id', (req, res, next) => {
-    const body = req.body
+    const { name, number } = req.body
 
-    const person = {
-        name: body.name,
-        number: body.number
-    }
-
-    Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    Person.findByIdAndUpdate(req.params.id, { name, number }, { new: true, runValidators: true, context: "query" })
         .then(updatedPerson => {
             res.json(updatedPerson)
         })
@@ -77,25 +74,10 @@ app.put('/api/persons/:id', (req, res, next) => {
 })
 
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
     const body = req.body
 
-    if (!body.name) {
-        return res.status(400).json({
-            error: 'name missing'
-        })
-    }
-
-    if (!body.number) {
-        return res.status(400).json({
-            error: 'number missing'
-        })
-    }
-
-
-
-    Person
-        .find({ name: body.name })
+    Person.find({ name: body.name })
         .then(result => {
             if (result.length > 0) {
                 return res.status(400).json({
@@ -106,14 +88,12 @@ app.post("/api/persons", (req, res) => {
                     name: body.name,
                     number: body.number
                 })
-                person.save().then(res.json(person))
+                person.save()
+                    .then(savedPerson => res.json(savedPerson))
+                    .catch(error => next(error))
             }
         })
-
-
-
-
-
+        .catch(error => next(error))
 })
 
 const unknownEndpoint = (req, res) => {
@@ -123,15 +103,18 @@ const unknownEndpoint = (req, res) => {
 app.use(unknownEndpoint)
 
 
-const castErrorHandler = (error, _req, res, next) => {
+const errorHandler = (error, _req, res, next) => {
     console.error(error.message)
     if (error.name === 'CastError') {
         return res.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === "ValidationError") {
+        return res.status(404).send({ error: error.message })
     }
+
     next(error)
 }
 
-app.use(castErrorHandler)
+app.use(errorHandler)
 
 
 const PORT = process.env.PORT
