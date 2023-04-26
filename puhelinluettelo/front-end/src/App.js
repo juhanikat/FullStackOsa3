@@ -89,8 +89,8 @@ const App = () => {
     }
     else {
       personService.createPerson(person)
-        .then(_response => {
-          setPersons(persons.concat(person))
+        .then(response => {
+          setPersons(persons.concat(response["data"]))
           setNewName("")
           setNewNumber("")
           setNotificationMessage(`Added ${person.name}`)
